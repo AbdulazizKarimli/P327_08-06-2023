@@ -1,6 +1,7 @@
 ﻿using APIStart.Contexts;
 using APIStart.DTOs.ServiceDtos;
 using APIStart.Models;
+using APIStart.Repositories.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,17 +13,19 @@ namespace APIStart.Controllers
     [ApiController]
     public class ServicesController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IServiceRepository _serviceRepository;
 
-        public ServicesController(AppDbContext context)
+        public ServicesController(IServiceRepository serviceRepository)
         {
-            _context = context;
+            _serviceRepository = serviceRepository;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var services = await _context.Services.ToListAsync();
+            //Expression<Func<T, bool>> expression
+            //ServiceRepository service = new ServiceRepository();
+            var services = await _serviceRepository.GetAll().ToListAsync();
 
             List<ServiceGetDto> serviceGetDtos = new List<ServiceGetDto>();
             foreach (var service in services)
@@ -53,8 +56,8 @@ namespace APIStart.Controllers
                 IsDeleted = false
             };
 
-            await _context.Services.AddAsync(service);
-            await _context.SaveChangesAsync();
+            await _serviceRepository.CreateAsync(service);
+            await _serviceRepository.SaveAsync();
 
             return StatusCode(StatusCodes.Status201Created, "Service successfully created");
         }
@@ -62,7 +65,7 @@ namespace APIStart.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute, FromQuery] int id, string search)
         {
-            var service = await _context.Services.FirstOrDefaultAsync(s => s.Id == id);
+            var service = await _serviceRepository.GetByIdAsync(id);
             if(service is null)
                 return NotFound($"Service not found by id: {id}");
 
@@ -72,7 +75,7 @@ namespace APIStart.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, ServicePutDto servicePutDto)
         {
-            var service = await _context.Services.FirstOrDefaultAsync(s => s.Id == id);
+            var service = await _serviceRepository.GetByIdAsync(id);
             if (service is null)
                 return NotFound($"Service not found by id: {id}");
 
@@ -83,8 +86,8 @@ namespace APIStart.Controllers
             service.Description = servicePutDto.Description;
             service.Image = servicePutDto.Image;
 
-            _context.Services.Update(service);
-            await _context.SaveChangesAsync();
+            _serviceRepository.Update(service);
+            await _serviceRepository.SaveAsync();
 
             return NoContent();
         }
@@ -92,12 +95,12 @@ namespace APIStart.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var service = await _context.Services.FirstOrDefaultAsync(s => s.Id == id);
+            var service = await _serviceRepository.GetByIdAsync(id);
             if (service is null)
                 return NotFound($"Service not found by id: {id}");
 
-            _context.Services.Remove(service);
-            await _context.SaveChangesAsync();
+            _serviceRepository.Delete(service);
+            await _serviceRepository.SaveAsync();
 
             return StatusCode(StatusCodes.Status200OK, "Service successfully deleted");
         }
