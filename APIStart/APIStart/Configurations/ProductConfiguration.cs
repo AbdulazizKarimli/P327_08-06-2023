@@ -13,6 +13,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Description).IsRequired(true).HasMaxLength(500);
         builder.Property(p => p.DiscountPercent).IsRequired(true).HasColumnType("decimal(18,2)");
         builder.Property(p => p.Rating).IsRequired(true);
+        builder.Property(p => p.CreatedAt).HasDefaultValue(DateTime.UtcNow);
+        builder.Property(p => p.ModifiedAt).HasDefaultValue(DateTime.UtcNow);
+        builder.Property(p => p.IsDeleted).HasDefaultValue(false);
 
         builder.HasCheckConstraint("CK_Rating_Value", "Rating BETWEEN 0 AND 10");
         builder.HasCheckConstraint("CK_Price_Value", "Price > 0");

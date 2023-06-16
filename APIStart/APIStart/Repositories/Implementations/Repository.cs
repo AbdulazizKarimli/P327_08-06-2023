@@ -1,6 +1,7 @@
 ﻿using APIStart.Contexts;
 using APIStart.Models.Common;
 using APIStart.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace APIStart.Repositories.Implementations;
@@ -39,9 +40,25 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         return _context.Set<T>().Where(expression); //p => !p.IsDeleted
     }
 
+    public async Task<T> GetSingleAsync(Expression<Func<T, bool>> expression)
+    {
+        return await _context.Set<T>().FirstOrDefaultAsync(expression);
+    }
+
+    public async Task<bool> IsExistAsync(Expression<Func<T, bool>> expression)
+    {
+        return await _context.Set<T>().AnyAsync(expression);       
+    }
+
     public async Task<int> SaveAsync()
     {
         return await _context.SaveChangesAsync();
+    }
+
+    public void SoftDelete(T entity)
+    {
+        entity.IsDeleted = true;
+        Update(entity);
     }
 
     public void Update(T entity)
